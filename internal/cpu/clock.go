@@ -10,15 +10,16 @@ type TimedClock struct {
 	tick chan bool
 }
 
+type StepClock struct {
+	tick chan bool
+}
+
 func NewTimedClock() Clock {
 	tick := make(chan bool)
-	ticker := time.NewTicker(10 * time.Millisecond)
+	ticker := time.NewTicker(1 * time.Millisecond)
 	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				tick <- true
-			}
+		for range ticker.C {
+			tick <- true
 		}
 	}()
 
@@ -27,4 +28,17 @@ func NewTimedClock() Clock {
 
 func (tc *TimedClock) Ticker() chan bool {
 	return tc.tick
+}
+
+func NewStepClock() Clock {
+	tick := make(chan bool)
+	go func() {
+
+	}()
+
+	return &TimedClock{tick}
+}
+
+func (sc *StepClock) Ticker() chan bool {
+	return sc.tick
 }
