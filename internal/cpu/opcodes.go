@@ -343,9 +343,9 @@ var InstructionMap = map[Opcode][]Cycle{
 	OPCODE_LDA_ZP:        {&CycleFetchAddressLow{}, &CycleFetchEffective{REGISTER_A}},
 	OPCODE_LDX_ZP:        {&CycleFetchAddressLow{}, &CycleFetchEffective{REGISTER_X}},
 	OPCODE_LDY_ZP:        {&CycleFetchAddressLow{}, &CycleFetchEffective{REGISTER_Y}},
-	OPCODE_LDA_ABSOLUTE:  {&CycleFetchAddressLow{}, &CycleFetchEffective{REGISTER_A}},
-	OPCODE_LDX_ABSOLUTE:  {&CycleFetchAddressLow{}, &CycleFetchEffective{REGISTER_X}},
-	OPCODE_LDY_ABSOLUTE:  {&CycleFetchAddressLow{}, &CycleFetchEffective{REGISTER_Y}},
+	OPCODE_LDA_ABSOLUTE:  {&CycleFetchAddressLow{}, &CycleFetchAddressHigh{}, &CycleFetchEffective{REGISTER_A}},
+	OPCODE_LDX_ABSOLUTE:  {&CycleFetchAddressLow{}, &CycleFetchAddressHigh{}, &CycleFetchEffective{REGISTER_X}},
+	OPCODE_LDY_ABSOLUTE:  {&CycleFetchAddressLow{}, &CycleFetchAddressHigh{}, &CycleFetchEffective{REGISTER_Y}},
 	// IN*/DE*
 	OPCODE_INX_IMPLIED: {&CycleIncImplied{REGISTER_X}},
 	OPCODE_INY_IMPLIED: {&CycleIncImplied{REGISTER_Y}},
