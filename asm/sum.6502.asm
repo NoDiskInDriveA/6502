@@ -1,15 +1,21 @@
-            * = $0800
+.include "macros.6502.asm"
+
 .code
-            LDA #00
-            STA $00
-            STA $01
-            LDX #30
-    LOOP
-            CLC
-            TXA
-            ADC $00
-            STA $00
-            LDA $01
-            ADC #00
-            DEX
-            BNE LOOP
+.org 0x0800
+    _START
+        LDA #00
+        STA $00
+        STA $01
+        LDX #30
+    _ITER
+        CLC
+        TXA
+        ADC $00
+        STA $00
+        LDA $01
+        ADC #00
+        STA $01
+        DEX
+        BNE _ITER
+    _END
+        HALT()

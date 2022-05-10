@@ -4,24 +4,6 @@ import (
 	"strings"
 )
 
-type ProgramCounter uint16
-
-func (p *ProgramCounter) SetLow(v uint8) {
-	*p = ProgramCounter(uint16(*p&0xFF00) | uint16(v))
-}
-
-func (p *ProgramCounter) Low() uint8 {
-	return uint8(*p)
-}
-
-func (p *ProgramCounter) SetHigh(v uint8) {
-	*p = ProgramCounter(uint16(*p&0x00FF) | uint16(v)<<8)
-}
-
-func (p *ProgramCounter) High() uint8 {
-	return uint8(*p >> 8)
-}
-
 type ProcessorStatusFlag uint8
 
 const (

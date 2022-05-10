@@ -15,69 +15,108 @@ const (
 	IRQ_VECTOR_MSB   uint16 = 0xFFFF
 )
 
+type state int8
+
+const (
+	STATE_FETCH   state = iota
+	STATE_EXECUTE state = iota
+)
+
 type Cpu struct {
-	A        uint8
-	X        uint8
-	Y        uint8
-	SP       uint8
-	PC       uint16
-	Status   *ProcessorStatus
-	Bus      *Bus
-	Clock    Clock
-	ir       Opcode
-	opCycles []Cycle
-	Data     uint8
-	AB       uint16
-	cycles   int64
+	A                        uint8
+	X                        uint8
+	Y                        uint8
+	SP                       uint8
+	PC                       uint16
+	Status                   *ProcessorStatus
+	Bus                      *Bus
+	Clock                    Clock
+	ir                       Opcode
+	currentInstructionCycles []Cycle
+	lifetimeCycles           uint64
+	Data                     uint8
+	AB                       uint16
+	enableHaltOpcode         bool
+	state                    state
 }
 
 func NewCpu() *Cpu {
 	return &Cpu{
-		Status: NewProcessorStatus(),
-		Bus:    NewBus(),
-		Clock:  NewTimedClock(),
+		Status:           NewProcessorStatus(),
+		Bus:              NewBus(),
+		Clock:            NewTimedClock(),
+		enableHaltOpcode: false,
+		state:            STATE_FETCH,
 	}
 }
 
-func (cpu *Cpu) LoadPrg(path string) {
+func (cpu *Cpu) LoadPrgAt(org uint16, path string) {
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		panic("Could not load input file")
 	}
-	cpu.Bus.Memory.Set(RESET_VECTOR_LSB, bytes[0])
-	cpu.Bus.Memory.Set(RESET_VECTOR_MSB, bytes[1])
-	var org uint16 = uint16(bytes[0]) + uint16(bytes[1])<<8
-	cpu.Bus.Memory.LoadAt(org, bytes[2:])
+	cpu.Bus.Memory.LoadAt(org, bytes)
+}
+
+func (cpu *Cpu) EnableHaltOpcode(enable bool) {
+	cpu.enableHaltOpcode = enable
 }
 
 // power up reset is non time critical
 func (cpu *Cpu) Run() {
 	cpu.SP = 0xFD
 	cpu.PC = uint16(cpu.Bus.Read(RESET_VECTOR_LSB)) + uint16(cpu.Bus.Read(RESET_VECTOR_MSB))<<8
-	cpu.loop(64)
+	cpu.Loop(10000)
 }
 
-func (cpu *Cpu) loop(maxCycles int64) {
-	for ; cpu.cycles < maxCycles; cpu.cycles++ {
+func (cpu *Cpu) Loop(maxCycles uint64) {
+	var currentInstructionCycle int
+	var nextCycle Cycle
+	for ; cpu.lifetimeCycles < maxCycles; cpu.lifetimeCycles++ {
 		<-cpu.Clock.Ticker()
-		if len(cpu.opCycles) < 1 {
-			// fetch and "decode" happens on last logical instruction cycle
+		switch cpu.state {
+		case STATE_FETCH:
 			cpu.ir = Opcode(cpu.Bus.Read(cpu.PC))
-			cpu.opCycles = InstructionMap[cpu.ir]
+			if cpu.ir == OPCODE_HALT {
+				if cpu.enableHaltOpcode {
+					fmt.Print("Encountered HALT instruction, exiting")
+					return
+				} else {
+					cpu.PC++
+					continue
+				}
+			}
+			cpu.state = STATE_EXECUTE
+			cpu.currentInstructionCycles = InstructionMap[cpu.ir]
+			currentInstructionCycle = 0
+			nextCycle = cpu.currentInstructionCycles[currentInstructionCycle]
 			cpu.PC++
-		} else {
-			next := cpu.opCycles[0]
-			cpu.opCycles = cpu.opCycles[1:]
-			next.Exec(cpu)
+		case STATE_EXECUTE:
+			additionalCycle := nextCycle.Exec(cpu)
+			if currentInstructionCycle == len(cpu.currentInstructionCycles) {
+				// interrupts are latched on the last logical ("hardcoded") cycle,
+				// which is also the only one that can return additional cycles
+				cpu.latchInterrupts()
+			}
+			currentInstructionCycle++
+			if additionalCycle != nil {
+				nextCycle = additionalCycle
+			} else if currentInstructionCycle < len(cpu.currentInstructionCycles) {
+				nextCycle = cpu.currentInstructionCycles[currentInstructionCycle]
+			} else {
+				cpu.state = STATE_FETCH
+			}
 		}
+
 		cpu.dumpStatus()
 		cpu.dumpMemoryLine(0x0000)
 		cpu.dumpMemoryLine(0x01F0)
-		cpu.dumpMemoryLine(0x4000)
+		cpu.dumpMemoryLine(0x0800)
+		cpu.dumpMemoryLine(0x0810)
 	}
 }
 
-func (cpu *Cpu) getRegister(reg RegisterDef) *uint8 {
+func (cpu *Cpu) GetRegister(reg RegisterDef) *uint8 {
 	switch reg {
 	case REGISTER_A:
 		return &cpu.A
@@ -90,6 +129,10 @@ func (cpu *Cpu) getRegister(reg RegisterDef) *uint8 {
 	default:
 		panic("Unhandled register!")
 	}
+}
+
+func (cpu *Cpu) latchInterrupts() {
+	// TODO handle interrupts
 }
 
 func (cpu *Cpu) dumpMemoryLine(startAddress uint16) {
@@ -116,5 +159,5 @@ func (cpu *Cpu) dumpMemoryLine(startAddress uint16) {
 }
 
 func (cpu *Cpu) dumpStatus() {
-	fmt.Printf(">>> A: 0x%02X X: 0x%02X Y: 0x%02X SR: %s\tCycles: %08d\tPC: 0x%04X\tSP: 0x%02X\tIR: 0x%02X\n", cpu.A, cpu.X, cpu.Y, cpu.Status, cpu.cycles, cpu.PC, cpu.SP, cpu.ir)
+	fmt.Printf(">>> A: 0x%02X X: 0x%02X Y: 0x%02X SR: %s\tCycles: %08d\tPC: 0x%04X\tSP: 0x%02X\tIR: 0x%02X\n", cpu.A, cpu.X, cpu.Y, cpu.Status, cpu.lifetimeCycles, cpu.PC, cpu.SP, cpu.ir)
 }

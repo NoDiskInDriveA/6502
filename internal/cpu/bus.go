@@ -29,10 +29,6 @@ type Bus struct {
 
 func NewBus() *Bus {
 	memory := NewMemory()
-	// hardwire default reset vector to 0x8000
-	memory.Set(RESET_VECTOR_LSB, 0x00)
-	memory.Set(RESET_VECTOR_MSB, 0x80)
-
 	return &Bus{memory}
 }
 

@@ -1,5 +1,5 @@
-            * = $0800
 .code
+.org $0800
             LDA #$10
             STA $00
             JSR Func
