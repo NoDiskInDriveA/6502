@@ -38,6 +38,7 @@ type Cpu struct {
 	AB                       uint16
 	enableHaltOpcode         bool
 	state                    state
+	pageChangedInfo          bool
 }
 
 func NewCpu() *Cpu {
@@ -47,6 +48,7 @@ func NewCpu() *Cpu {
 		Clock:            NewTimedClock(),
 		enableHaltOpcode: false,
 		state:            STATE_FETCH,
+		pageChangedInfo:  false,
 	}
 }
 
@@ -113,6 +115,9 @@ func (cpu *Cpu) Loop(maxCycles uint64) {
 		cpu.dumpMemoryLine(0x01F0)
 		cpu.dumpMemoryLine(0x0800)
 		cpu.dumpMemoryLine(0x0810)
+		cpu.dumpMemoryLine(0x1EF0)
+		cpu.dumpMemoryLine(0x1FF0)
+		cpu.dumpMemoryLine(0x2000)
 	}
 }
 
@@ -159,5 +164,5 @@ func (cpu *Cpu) dumpMemoryLine(startAddress uint16) {
 }
 
 func (cpu *Cpu) dumpStatus() {
-	fmt.Printf(">>> A: 0x%02X X: 0x%02X Y: 0x%02X SR: %s\tCycles: %08d\tPC: 0x%04X\tSP: 0x%02X\tIR: 0x%02X\n", cpu.A, cpu.X, cpu.Y, cpu.Status, cpu.lifetimeCycles, cpu.PC, cpu.SP, cpu.ir)
+	fmt.Printf(">>> A: 0x%02X X: 0x%02X Y: 0x%02X SR: %s\tCycles: %08d\tPC: 0x%04X\tSP: 0x%02X\tIR: 0x%02X\tAB: 0x%04X\n", cpu.A, cpu.X, cpu.Y, cpu.Status, cpu.lifetimeCycles, cpu.PC, cpu.SP, cpu.ir, cpu.AB)
 }

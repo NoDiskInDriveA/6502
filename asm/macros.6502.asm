@@ -9,3 +9,13 @@
 .macro HALT()
     .byte $F2
 .endmacro
+
+.macro ADD(SRC)
+    CLC
+    ADC SRC
+.endmacro
+
+.macro SUB(SRC)
+    SEC
+    SBC SRC
+.endmacro

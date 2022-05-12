@@ -12,7 +12,8 @@ const (
 func main() {
 	c := cpu.NewCpu()
 	// c.LoadPrgAt(PRG_LOCATION, "/Users/patrick.durold/Projects/GoLang/6502/asm/main.bin")
-	c.LoadPrgAt(PRG_LOCATION, "/Users/patrick.durold/Projects/GoLang/6502/asm/sum.bin")
+	c.LoadPrgAt(PRG_LOCATION, "/Users/patrick.durold/Projects/GoLang/6502/asm/tests/st_absolute_indexed.bin")
+	// c.LoadPrgAt(PRG_LOCATION, "/Users/patrick.durold/Projects/GoLang/6502/asm/tests/ld_absolute_indexed.bin")
 	// loading ROM last so it can't be overwritten by PRG (until there's an address decoder implemented)
 	c.LoadPrgAt(ROM_LOCATION, "/Users/patrick.durold/Projects/GoLang/6502/asm/rom.bin")
 	c.EnableHaltOpcode(true)
