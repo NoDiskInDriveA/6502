@@ -1,6 +1,6 @@
-package cpu
+package mos_6502
 
-import "github.com/NoDiskInDriveA/6502/internal/cpu/pc"
+import "github.com/NoDiskInDriveA/6502/internal/helper/pc"
 
 type Opcode uint8
 
@@ -93,14 +93,14 @@ const (
 )
 
 type Cycle interface {
-	Exec(*Cpu) Cycle // returns an additional cycle for variable duration ops, nil otherwise
+	Exec(*processor6502) Cycle // returns an additional cycle for variable duration ops, nil otherwise
 }
 
 // CycleWait
 
 type CycleWait struct{}
 
-func (c *CycleWait) Exec(cpu *Cpu) Cycle {
+func (c *CycleWait) Exec(proc *processor6502) Cycle {
 	return nil
 }
 
@@ -108,8 +108,8 @@ func (c *CycleWait) Exec(cpu *Cpu) Cycle {
 
 type CycleTrash struct{}
 
-func (c *CycleTrash) Exec(cpu *Cpu) Cycle {
-	cpu.Bus.Read(cpu.PC)
+func (c *CycleTrash) Exec(proc *processor6502) Cycle {
+	proc.Bus.Read(proc.PC)
 	return nil
 }
 
@@ -119,10 +119,10 @@ type CycleFetchImmediate struct {
 	Target RegisterDef
 }
 
-func (c *CycleFetchImmediate) Exec(cpu *Cpu) Cycle {
-	*cpu.GetRegister(c.Target) = cpu.Bus.Read(cpu.PC)
-	cpu.Status.UpdateNZ(*cpu.GetRegister(c.Target))
-	cpu.PC++
+func (c *CycleFetchImmediate) Exec(proc *processor6502) Cycle {
+	*proc.GetRegister(c.Target) = proc.Bus.Read(proc.PC)
+	proc.Status.UpdateNZ(*proc.GetRegister(c.Target))
+	proc.PC++
 	return nil
 }
 
@@ -130,9 +130,9 @@ func (c *CycleFetchImmediate) Exec(cpu *Cpu) Cycle {
 
 type CycleFetchAddressLow struct{}
 
-func (c *CycleFetchAddressLow) Exec(cpu *Cpu) Cycle {
-	cpu.AB = uint16(cpu.Bus.Read(cpu.PC))
-	cpu.PC++
+func (c *CycleFetchAddressLow) Exec(proc *processor6502) Cycle {
+	proc.AB = uint16(proc.Bus.Read(proc.PC))
+	proc.PC++
 	return nil
 }
 
@@ -140,9 +140,9 @@ func (c *CycleFetchAddressLow) Exec(cpu *Cpu) Cycle {
 
 type CycleFetchAddressHigh struct{}
 
-func (c *CycleFetchAddressHigh) Exec(cpu *Cpu) Cycle {
-	cpu.AB += uint16(cpu.Bus.Read(cpu.PC)) << 8
-	cpu.PC++
+func (c *CycleFetchAddressHigh) Exec(proc *processor6502) Cycle {
+	proc.AB += uint16(proc.Bus.Read(proc.PC)) << 8
+	proc.PC++
 	return nil
 }
 
@@ -152,8 +152,8 @@ type CycleWriteEffective struct {
 	Source RegisterDef
 }
 
-func (c *CycleWriteEffective) Exec(cpu *Cpu) Cycle {
-	cpu.Bus.Write(cpu.AB, *cpu.GetRegister(c.Source))
+func (c *CycleWriteEffective) Exec(proc *processor6502) Cycle {
+	proc.Bus.Write(proc.AB, *proc.GetRegister(c.Source))
 	return nil
 }
 
@@ -163,10 +163,10 @@ type CycleFetchEffective struct {
 	Target RegisterDef
 }
 
-func (c *CycleFetchEffective) Exec(cpu *Cpu) Cycle {
-	reg := cpu.GetRegister(c.Target)
-	*reg = cpu.Bus.Read(cpu.AB)
-	cpu.Status.UpdateNZ(*reg)
+func (c *CycleFetchEffective) Exec(proc *processor6502) Cycle {
+	reg := proc.GetRegister(c.Target)
+	*reg = proc.Bus.Read(proc.AB)
+	proc.Status.UpdateNZ(*reg)
 	return nil
 }
 
@@ -177,8 +177,8 @@ type CycleFetchAddressIndexedZp struct {
 	Index RegisterDef
 }
 
-func (c *CycleFetchAddressIndexedZp) Exec(cpu *Cpu) Cycle {
-	cpu.AB = (uint16(cpu.Bus.Read(cpu.AB)) + uint16(*cpu.GetRegister(c.Index))) & 0xFF
+func (c *CycleFetchAddressIndexedZp) Exec(proc *processor6502) Cycle {
+	proc.AB = (uint16(proc.Bus.Read(proc.AB)) + uint16(*proc.GetRegister(c.Index))) & 0xFF
 	return nil
 }
 
@@ -188,12 +188,12 @@ type CycleFetchAddressIndexed struct {
 	Index RegisterDef
 }
 
-func (c *CycleFetchAddressIndexed) Exec(cpu *Cpu) Cycle {
-	high := cpu.Bus.Read(cpu.PC)
-	calcAddressLsb := uint16(cpu.AB) + uint16(*cpu.GetRegister(c.Index))
-	cpu.pageChangedInfo = calcAddressLsb&0x100 != 0
-	cpu.AB = (uint16(high) << 8) | calcAddressLsb&0xFF
-	cpu.PC++
+func (c *CycleFetchAddressIndexed) Exec(proc *processor6502) Cycle {
+	high := proc.Bus.Read(proc.PC)
+	calcAddressLsb := uint16(proc.AB) + uint16(*proc.GetRegister(c.Index))
+	proc.pageChangedInfo = calcAddressLsb&0x100 != 0
+	proc.AB = (uint16(high) << 8) | calcAddressLsb&0xFF
+	proc.PC++
 	return nil
 }
 
@@ -203,12 +203,12 @@ type CycleFetchEffectiveIndexed struct {
 	Target RegisterDef
 }
 
-func (c *CycleFetchEffectiveIndexed) Exec(cpu *Cpu) Cycle {
-	*cpu.GetRegister(c.Target) = cpu.Bus.Read(cpu.AB)
-	cpu.Status.UpdateNZ(*cpu.GetRegister(c.Target))
-	if cpu.pageChangedInfo {
-		cpu.pageChangedInfo = false
-		cpu.AB = ((cpu.AB & 0xFF00) + 0x100) | cpu.AB&0x00FF
+func (c *CycleFetchEffectiveIndexed) Exec(proc *processor6502) Cycle {
+	*proc.GetRegister(c.Target) = proc.Bus.Read(proc.AB)
+	proc.Status.UpdateNZ(*proc.GetRegister(c.Target))
+	if proc.pageChangedInfo {
+		proc.pageChangedInfo = false
+		proc.AB = ((proc.AB & 0xFF00) + 0x100) | proc.AB&0x00FF
 		return c
 	}
 	return nil
@@ -219,11 +219,11 @@ func (c *CycleFetchEffectiveIndexed) Exec(cpu *Cpu) Cycle {
 type CycleCalcEffectiveAddrIndexed struct {
 }
 
-func (c *CycleCalcEffectiveAddrIndexed) Exec(cpu *Cpu) Cycle {
-	cpu.Bus.Read(cpu.AB)
-	if cpu.pageChangedInfo {
-		cpu.pageChangedInfo = false
-		cpu.AB = ((cpu.AB & 0xFF00) + 0x100) | cpu.AB&0x00FF
+func (c *CycleCalcEffectiveAddrIndexed) Exec(proc *processor6502) Cycle {
+	proc.Bus.Read(proc.AB)
+	if proc.pageChangedInfo {
+		proc.pageChangedInfo = false
+		proc.AB = ((proc.AB & 0xFF00) + 0x100) | proc.AB&0x00FF
 	}
 	return nil
 }
@@ -234,10 +234,10 @@ type CycleIncImplied struct {
 	Implied RegisterDef
 }
 
-func (c *CycleIncImplied) Exec(cpu *Cpu) Cycle {
-	reg := cpu.GetRegister(c.Implied)
+func (c *CycleIncImplied) Exec(proc *processor6502) Cycle {
+	reg := proc.GetRegister(c.Implied)
 	*reg += uint8(1)
-	cpu.Status.UpdateNZ(*reg)
+	proc.Status.UpdateNZ(*reg)
 	return nil
 }
 
@@ -247,10 +247,10 @@ type CycleDecImplied struct {
 	Implied RegisterDef
 }
 
-func (c *CycleDecImplied) Exec(cpu *Cpu) Cycle {
-	reg := cpu.GetRegister(c.Implied)
+func (c *CycleDecImplied) Exec(proc *processor6502) Cycle {
+	reg := proc.GetRegister(c.Implied)
 	*reg -= uint8(1)
-	cpu.Status.UpdateNZ(*reg)
+	proc.Status.UpdateNZ(*reg)
 	return nil
 }
 
@@ -261,9 +261,9 @@ type CycleCopyRegister struct {
 	Target RegisterDef
 }
 
-func (c *CycleCopyRegister) Exec(cpu *Cpu) Cycle {
-	*cpu.GetRegister(c.Target) = *cpu.GetRegister(c.Source)
-	cpu.Status.UpdateNZ(*cpu.GetRegister(c.Target))
+func (c *CycleCopyRegister) Exec(proc *processor6502) Cycle {
+	*proc.GetRegister(c.Target) = *proc.GetRegister(c.Source)
+	proc.Status.UpdateNZ(*proc.GetRegister(c.Target))
 	return nil
 }
 
@@ -272,22 +272,22 @@ func (c *CycleCopyRegister) Exec(cpu *Cpu) Cycle {
 
 type CycleAddWithCarryImmediate struct{}
 
-func (c *CycleAddWithCarryImmediate) Exec(cpu *Cpu) Cycle {
-	reg := cpu.GetRegister(REGISTER_A)
+func (c *CycleAddWithCarryImmediate) Exec(proc *processor6502) Cycle {
+	reg := proc.GetRegister(REGISTER_A)
 	op1 := uint16(*reg)
-	op2 := uint16(cpu.Bus.Read(cpu.PC))
+	op2 := uint16(proc.Bus.Read(proc.PC))
 	sum := op1 + op2
-	if cpu.Status.Get(PROCESSOR_STATUS_FLAG_C) {
+	if proc.Status.Get(PROCESSOR_STATUS_FLAG_C) {
 		sum += 1
 	}
 	carry := sum>>8 != 0
 	signBit := uint16(0x0080)
 	overflow := (op1&signBit == op2&signBit) && (op1&signBit != sum&signBit)
 	*reg = uint8(sum)
-	cpu.Status.Update(PROCESSOR_STATUS_FLAG_C, carry)
-	cpu.Status.Update(PROCESSOR_STATUS_FLAG_V, overflow)
-	cpu.Status.UpdateNZ(*reg)
-	cpu.PC++
+	proc.Status.Update(PROCESSOR_STATUS_FLAG_C, carry)
+	proc.Status.Update(PROCESSOR_STATUS_FLAG_V, overflow)
+	proc.Status.UpdateNZ(*reg)
+	proc.PC++
 	return nil
 }
 
@@ -296,42 +296,42 @@ func (c *CycleAddWithCarryImmediate) Exec(cpu *Cpu) Cycle {
 
 type CycleAddWithCarryEffective struct{}
 
-func (c *CycleAddWithCarryEffective) Exec(cpu *Cpu) Cycle {
-	reg := cpu.GetRegister(REGISTER_A)
+func (c *CycleAddWithCarryEffective) Exec(proc *processor6502) Cycle {
+	reg := proc.GetRegister(REGISTER_A)
 	op1 := uint16(*reg)
-	op2 := uint16(cpu.Bus.Read(cpu.AB))
+	op2 := uint16(proc.Bus.Read(proc.AB))
 	sum := op1 + op2
-	if cpu.Status.Get(PROCESSOR_STATUS_FLAG_C) {
+	if proc.Status.Get(PROCESSOR_STATUS_FLAG_C) {
 		sum += 1
 	}
 	carry := sum>>8 != 0
 	signBit := uint16(0x0080)
 	overflow := (op1&signBit == op2&signBit) && (op1&signBit != sum&signBit)
 	*reg = uint8(sum)
-	cpu.Status.Update(PROCESSOR_STATUS_FLAG_C, carry)
-	cpu.Status.Update(PROCESSOR_STATUS_FLAG_V, overflow)
-	cpu.Status.UpdateNZ(*reg)
+	proc.Status.Update(PROCESSOR_STATUS_FLAG_C, carry)
+	proc.Status.Update(PROCESSOR_STATUS_FLAG_V, overflow)
+	proc.Status.UpdateNZ(*reg)
 	return nil
 }
 
 type CycleSubWithBorrowImmediate struct{}
 
-func (c *CycleSubWithBorrowImmediate) Exec(cpu *Cpu) Cycle {
-	reg := cpu.GetRegister(REGISTER_A)
+func (c *CycleSubWithBorrowImmediate) Exec(proc *processor6502) Cycle {
+	reg := proc.GetRegister(REGISTER_A)
 	op1 := uint16(*reg)
-	op2 := uint16(cpu.Bus.Read(cpu.PC))
+	op2 := uint16(proc.Bus.Read(proc.PC))
 	diff := op1 - op2
-	if cpu.Status.Get(PROCESSOR_STATUS_FLAG_C) {
+	if proc.Status.Get(PROCESSOR_STATUS_FLAG_C) {
 		diff -= 1
 	}
 	carry := diff>>8 != 0
 	signBit := uint16(0x0080)
 	overflow := (op1&signBit != op2&signBit) && (op2&signBit == diff&signBit)
 	*reg = uint8(diff)
-	cpu.Status.Update(PROCESSOR_STATUS_FLAG_C, carry)
-	cpu.Status.Update(PROCESSOR_STATUS_FLAG_V, overflow)
-	cpu.Status.UpdateNZ(*reg)
-	cpu.PC++
+	proc.Status.Update(PROCESSOR_STATUS_FLAG_C, carry)
+	proc.Status.Update(PROCESSOR_STATUS_FLAG_V, overflow)
+	proc.Status.UpdateNZ(*reg)
+	proc.PC++
 	return nil
 }
 
@@ -341,8 +341,8 @@ type CycleProcFlagSet struct {
 	Flag ProcessorStatusFlag
 }
 
-func (c *CycleProcFlagSet) Exec(cpu *Cpu) Cycle {
-	cpu.Status.Set(c.Flag)
+func (c *CycleProcFlagSet) Exec(proc *processor6502) Cycle {
+	proc.Status.Set(c.Flag)
 	return nil
 }
 
@@ -352,8 +352,8 @@ type CycleProcFlagClear struct {
 	Flag ProcessorStatusFlag
 }
 
-func (c *CycleProcFlagClear) Exec(cpu *Cpu) Cycle {
-	cpu.Status.Clear(c.Flag)
+func (c *CycleProcFlagClear) Exec(proc *processor6502) Cycle {
+	proc.Status.Clear(c.Flag)
 	return nil
 }
 
@@ -362,8 +362,8 @@ func (c *CycleProcFlagClear) Exec(cpu *Cpu) Cycle {
 type CycleCopyPclFetchPch struct {
 }
 
-func (c *CycleCopyPclFetchPch) Exec(cpu *Cpu) Cycle {
-	cpu.PC = (cpu.AB & 0xFF) | uint16(cpu.Bus.Read(cpu.PC))<<8
+func (c *CycleCopyPclFetchPch) Exec(proc *processor6502) Cycle {
+	proc.PC = (proc.AB & 0xFF) | uint16(proc.Bus.Read(proc.PC))<<8
 	return nil
 }
 
@@ -371,46 +371,46 @@ func (c *CycleCopyPclFetchPch) Exec(cpu *Cpu) Cycle {
 
 type CycleJsrPchPush struct{}
 
-func (c *CycleJsrPchPush) Exec(cpu *Cpu) Cycle {
-	cpu.Bus.Write(0x100+uint16(cpu.SP), uint8(cpu.PC>>8))
-	cpu.SP--
+func (c *CycleJsrPchPush) Exec(proc *processor6502) Cycle {
+	proc.Bus.Write(0x100+uint16(proc.SP), uint8(proc.PC>>8))
+	proc.SP--
 	return nil
 }
 
 type CycleJsrPclPush struct{}
 
-func (c *CycleJsrPclPush) Exec(cpu *Cpu) Cycle {
-	cpu.Bus.Write(0x100+uint16(cpu.SP), uint8(cpu.PC))
-	cpu.SP--
+func (c *CycleJsrPclPush) Exec(proc *processor6502) Cycle {
+	proc.Bus.Write(0x100+uint16(proc.SP), uint8(proc.PC))
+	proc.SP--
 	return nil
 }
 
 type CycleRtIncSp struct{}
 
-func (c *CycleRtIncSp) Exec(cpu *Cpu) Cycle {
-	cpu.SP++
+func (c *CycleRtIncSp) Exec(proc *processor6502) Cycle {
+	proc.SP++
 	return nil
 }
 
 type CycleRtPullPcl struct{}
 
-func (c *CycleRtPullPcl) Exec(cpu *Cpu) Cycle {
-	cpu.PC = cpu.PC&0xFF00 | uint16(cpu.Bus.Read(0x100+uint16(cpu.SP)))
-	cpu.SP++
+func (c *CycleRtPullPcl) Exec(proc *processor6502) Cycle {
+	proc.PC = proc.PC&0xFF00 | uint16(proc.Bus.Read(0x100+uint16(proc.SP)))
+	proc.SP++
 	return nil
 }
 
 type CycleRtPullPch struct{}
 
-func (c *CycleRtPullPch) Exec(cpu *Cpu) Cycle {
-	cpu.PC = cpu.PC&0x00FF | uint16(cpu.Bus.Read(0x100+uint16(cpu.SP)))<<8
+func (c *CycleRtPullPch) Exec(proc *processor6502) Cycle {
+	proc.PC = proc.PC&0x00FF | uint16(proc.Bus.Read(0x100+uint16(proc.SP)))<<8
 	return nil
 }
 
 type CycleRtIncPc struct{}
 
-func (c *CycleRtIncPc) Exec(cpu *Cpu) Cycle {
-	cpu.PC++
+func (c *CycleRtIncPc) Exec(proc *processor6502) Cycle {
+	proc.PC++
 	return nil
 }
 
@@ -424,16 +424,16 @@ type CycleBranchTake struct {
 	pc.PageCrossing
 }
 
-func (c *CycleBranchTake) Exec(cpu *Cpu) Cycle {
+func (c *CycleBranchTake) Exec(proc *processor6502) Cycle {
 	if c.PageCrossing == pc.PAGE_CROSSED_OVERFLOW {
-		cpu.PC = (cpu.PC & 0xFF00) + 1 | (cpu.PC & 0xFF)
+		proc.PC = (proc.PC & 0xFF00) + 1 | (proc.PC & 0xFF)
 		return tmpCycleBranchTake
 	}
 	if c.PageCrossing == pc.PAGE_CROSSED_UNDERFLOW {
-		cpu.PC = (cpu.PC & 0xFF00) - uint16(1) | (cpu.PC & 0xFF)
+		proc.PC = (proc.PC & 0xFF00) - uint16(1) | (proc.PC & 0xFF)
 		return tmpCycleBranchTake
 	}
-	cpu.PC++
+	proc.PC++
 	return nil
 }
 
@@ -442,14 +442,14 @@ type CycleBranchFetchOp struct {
 	FlagTest bool
 }
 
-func (c *CycleBranchFetchOp) Exec(cpu *Cpu) Cycle {
-	branchAddress := cpu.Bus.Memory.Get(cpu.PC)
-	if c.FlagTest != cpu.Status.Get(c.Flag) {
-		cpu.PC++
+func (c *CycleBranchFetchOp) Exec(proc *processor6502) Cycle {
+	branchAddress := proc.Bus.Read(proc.PC)
+	if c.FlagTest != proc.Status.Get(c.Flag) {
+		proc.PC++
 		return nil
 	}
-	newPC, pageCross := pc.AddPcSigned(cpu.PC, branchAddress)
-	cpu.PC = cpu.PC&0xFF00 | newPC&0xFF
+	newPC, pageCross := pc.AddPcSigned(proc.PC, branchAddress)
+	proc.PC = proc.PC&0xFF00 | newPC&0xFF
 
 	switch pageCross {
 	case pc.PAGE_CROSSED_OVERFLOW:
@@ -462,9 +462,9 @@ func (c *CycleBranchFetchOp) Exec(cpu *Cpu) Cycle {
 
 }
 
-// InstructionMap
+// InstructionSet
 // Instructions are one cycle longer than array elements as fetch op is part of the cpu
-var InstructionMap = map[Opcode][]Cycle{
+var InstructionSet = map[Opcode][]Cycle{
 	OPCODE_NOP: {&CycleWait{}},
 	// LD*
 	OPCODE_LDA_IMMEDIATE:  {&CycleFetchImmediate{REGISTER_A}},

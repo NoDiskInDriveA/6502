@@ -6,7 +6,7 @@
         LDA #00
         STA $00
         STA $01
-        LDX #30
+        LDX #255
     _ITER
         CLC
         TXA

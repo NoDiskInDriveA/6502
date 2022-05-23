@@ -1,4 +1,4 @@
-package cpu
+package mos_6502
 
 import (
 	"strings"
@@ -17,23 +17,23 @@ const (
 	PROCESSOR_STATUS_FLAG_C ProcessorStatusFlag = 0x01
 )
 
-type ProcessorStatus struct {
+type processorStatus struct {
 	value uint8
 }
 
-func NewProcessorStatus() *ProcessorStatus {
-	return &ProcessorStatus{uint8(PROCESSOR_STATUS_FLAG_U | PROCESSOR_STATUS_FLAG_B | PROCESSOR_STATUS_FLAG_Z | PROCESSOR_STATUS_FLAG_I)}
+func NewProcessorStatus() *processorStatus {
+	return &processorStatus{uint8(PROCESSOR_STATUS_FLAG_U | PROCESSOR_STATUS_FLAG_B | PROCESSOR_STATUS_FLAG_Z | PROCESSOR_STATUS_FLAG_I)}
 }
 
-func (ps *ProcessorStatus) Set(flag ProcessorStatusFlag) {
+func (ps *processorStatus) Set(flag ProcessorStatusFlag) {
 	ps.value |= uint8(flag)
 }
 
-func (ps *ProcessorStatus) Clear(flag ProcessorStatusFlag) {
+func (ps *processorStatus) Clear(flag ProcessorStatusFlag) {
 	ps.value &= ^uint8(flag)
 }
 
-func (ps *ProcessorStatus) Update(flag ProcessorStatusFlag, on bool) {
+func (ps *processorStatus) Update(flag ProcessorStatusFlag, on bool) {
 	if on {
 		ps.Set(flag)
 	} else {
@@ -41,11 +41,11 @@ func (ps *ProcessorStatus) Update(flag ProcessorStatusFlag, on bool) {
 	}
 }
 
-func (ps *ProcessorStatus) Get(flag ProcessorStatusFlag) bool {
+func (ps *processorStatus) Get(flag ProcessorStatusFlag) bool {
 	return ps.value&uint8(flag) != 0
 }
 
-func (ps *ProcessorStatus) UpdateNZ(value uint8) {
+func (ps *processorStatus) UpdateNZ(value uint8) {
 	if value>>7 == 0 {
 		ps.Clear(PROCESSOR_STATUS_FLAG_N)
 	} else {
@@ -59,7 +59,7 @@ func (ps *ProcessorStatus) UpdateNZ(value uint8) {
 	}
 }
 
-func (ps *ProcessorStatus) String() string {
+func (ps *processorStatus) String() string {
 	var mask uint8 = 0x80
 	r := ""
 	for _, s := range strings.Split("nvubdizc", "") {

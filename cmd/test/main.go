@@ -1,18 +1,17 @@
 package main
 
-import "fmt"
-
-type Base interface {
-	B()
-}
-
-type Ext interface {
-	Base
-	E()
-}
+import (
+	"fmt"
+	"math/big"
+	"time"
+)
 
 func main() {
-	t := int8(-80)
-	ut := uint8(t)
-	fmt.Printf("%b %b", t, ut)
+	start := time.Now()
+
+	r := new(big.Int)
+	fmt.Println(r.Binomial(1000, 10))
+
+	elapsed := time.Since(start)
+	fmt.Printf("Binomial took %s", elapsed)
 }
