@@ -54,3 +54,24 @@ func TestStAbsoluteIndexed(t *testing.T) {
 	assert.EqualValues(t, uint8(0x02), ram.Read(0x1FFF))
 	assert.EqualValues(t, uint8(0x03), ram.Read(0x2000))
 }
+
+func TestUnaryLogic(t *testing.T) {
+	clock, ram := createTestSystem("../asm/tests/unary_logic_test.bin")
+	<-clock.StartClock(time.Microsecond)
+	assert.EqualValues(t, uint8(0x7F), ram.Read(0x4000))
+	assert.EqualValues(t, uint8(0x01), ram.Read(0x4001))
+	assert.EqualValues(t, uint8(0xFF), ram.Read(0x4002))
+	assert.EqualValues(t, uint8(0x01), ram.Read(0x4003))
+	assert.EqualValues(t, uint8(0xFE), ram.Read(0x4004))
+	assert.EqualValues(t, uint8(0x01), ram.Read(0x4005))
+	assert.EqualValues(t, uint8(0xFF), ram.Read(0x4006))
+	assert.EqualValues(t, uint8(0x01), ram.Read(0x4007))
+	assert.EqualValues(t, uint8(0x7F), ram.Read(0x4008))
+	assert.EqualValues(t, uint8(0x01), ram.Read(0x4009))
+	assert.EqualValues(t, uint8(0xFF), ram.Read(0x400A))
+	assert.EqualValues(t, uint8(0x01), ram.Read(0x400B))
+	assert.EqualValues(t, uint8(0xFE), ram.Read(0x400C))
+	assert.EqualValues(t, uint8(0x01), ram.Read(0x400D))
+	assert.EqualValues(t, uint8(0xFF), ram.Read(0x400E))
+	assert.EqualValues(t, uint8(0x01), ram.Read(0x400F))
+}

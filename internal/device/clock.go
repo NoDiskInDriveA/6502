@@ -41,6 +41,7 @@ func (tc *synchronizedSystemClock) StartClock(tickDuration time.Duration) chan b
 	ticker := time.NewTicker(tickDuration)
 	stop := make(chan bool)
 	running := true
+	deviceCount := len(tc.devices)
 	var waitgroup sync.WaitGroup
 	go func() {
 		for running {
@@ -48,7 +49,7 @@ func (tc *synchronizedSystemClock) StartClock(tickDuration time.Duration) chan b
 			if tc.debugger != nil {
 				running = running && tc.debugger.Tick()
 			}
-			waitgroup.Add(len(tc.devices))
+			waitgroup.Add(deviceCount)
 			for _, d := range tc.devices {
 				go func(device ClockAwareDevice) {
 					running = running && device.Tick()

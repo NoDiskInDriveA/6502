@@ -41,7 +41,15 @@ func (ps *processorStatus) Update(flag ProcessorStatusFlag, on bool) {
 	}
 }
 
-func (ps *processorStatus) Get(flag ProcessorStatusFlag) bool {
+func (ps *processorStatus) Get(flag ProcessorStatusFlag) uint8 {
+	if ps.value&uint8(flag) != 0 {
+		return 1
+	}
+
+	return 0
+}
+
+func (ps *processorStatus) GetFlag(flag ProcessorStatusFlag) bool {
 	return ps.value&uint8(flag) != 0
 }
 

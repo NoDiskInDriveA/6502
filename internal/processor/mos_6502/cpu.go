@@ -37,7 +37,7 @@ type processor6502 struct {
 	PC                           uint16
 	Status                       *processorStatus
 	Bus                          device.ReadWriteDevice
-	Data                         uint8
+	DataLatch                    uint8
 	AB                           uint16
 	IR                           Opcode
 	currentInstructionCycles     []Cycle
@@ -122,6 +122,8 @@ func (p *processor6502) GetRegister(reg RegisterDef) *uint8 {
 		return &p.Y
 	case REGISTER_SP:
 		return &p.SP
+	case DATA_LATCH:
+		return &p.DataLatch
 	default:
 		panic("Unhandled register!")
 	}

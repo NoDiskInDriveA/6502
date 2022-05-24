@@ -9,16 +9,16 @@ import (
 
 func TestSetAndClearBit(t *testing.T) {
 	st := mos_6502.NewProcessorStatus()
-	assert.False(t, st.Get(mos_6502.PROCESSOR_STATUS_FLAG_C))
-	assert.True(t, st.Get(mos_6502.PROCESSOR_STATUS_FLAG_Z))
+	assert.False(t, st.GetFlag(mos_6502.PROCESSOR_STATUS_FLAG_C))
+	assert.True(t, st.GetFlag(mos_6502.PROCESSOR_STATUS_FLAG_Z))
 
 	st.Set(mos_6502.PROCESSOR_STATUS_FLAG_C)
-	assert.True(t, st.Get(mos_6502.PROCESSOR_STATUS_FLAG_C))
-	assert.True(t, st.Get(mos_6502.PROCESSOR_STATUS_FLAG_Z))
+	assert.True(t, st.GetFlag(mos_6502.PROCESSOR_STATUS_FLAG_C))
+	assert.True(t, st.GetFlag(mos_6502.PROCESSOR_STATUS_FLAG_Z))
 
 	st.Clear(mos_6502.PROCESSOR_STATUS_FLAG_Z)
-	assert.True(t, st.Get(mos_6502.PROCESSOR_STATUS_FLAG_C))
-	assert.False(t, st.Get(mos_6502.PROCESSOR_STATUS_FLAG_Z))
+	assert.True(t, st.GetFlag(mos_6502.PROCESSOR_STATUS_FLAG_C))
+	assert.False(t, st.GetFlag(mos_6502.PROCESSOR_STATUS_FLAG_Z))
 }
 
 func TestStringOutput(t *testing.T) {

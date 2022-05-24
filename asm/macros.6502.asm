@@ -8,6 +8,8 @@
 
 .macro HALT()
     .byte $F2
+    // if halt opcode is not enabled, loop forever
+    JMP *
 .endmacro
 
 .macro ADD(SRC)

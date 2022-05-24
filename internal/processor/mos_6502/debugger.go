@@ -22,8 +22,11 @@ func (d debugger) Tick() bool {
 	d.dumpMemoryLine(0x01F0)
 	d.dumpMemoryLine(0x0800)
 	d.dumpMemoryLine(0x0810)
-	d.dumpMemoryLine(0x1EF0)
-	d.dumpMemoryLine(0x1FF0)
+	d.dumpMemoryLine(0x0820)
+	d.dumpMemoryLine(0x0830)
+	d.dumpMemoryLine(0x0840)
+	// d.dumpMemoryLine(0x1EF0)
+	// d.dumpMemoryLine(0x1FF0)
 	d.dumpMemoryLine(0x2000)
 	return true
 }

@@ -34,12 +34,12 @@ const (
 	OPCODE_STA_ABSOLUTE Opcode = 0x8D
 	OPCODE_STX_ABSOLUTE Opcode = 0x8E
 	OPCODE_STY_ABSOLUTE Opcode = 0x8C
-	//# WIP
+
 	OPCODE_STA_ABSOLUTE_X Opcode = 0x9D
 	OPCODE_STA_ABSOLUTE_Y Opcode = 0x99
-	OPCODE_STA_INDIRECT_X Opcode = 0x81
-	OPCODE_STA_INDIRECT_Y Opcode = 0x91
-	//# WIP END
+	//TODO OPCODE_STA_INDIRECT_X Opcode = 0x81
+	//TODO OPCODE_STA_INDIRECT_Y Opcode = 0x91
+
 	OPCODE_INY_IMPLIED Opcode = 0xC8
 	OPCODE_INX_IMPLIED Opcode = 0xE8
 	OPCODE_DEY_IMPLIED Opcode = 0x88
@@ -55,7 +55,7 @@ const (
 	OPCODE_JMP_ABSOLUTE Opcode = 0x4C
 	OPCODE_JSR_ABSOLUTE Opcode = 0x20
 	OPCODE_RTS_IMPLIED  Opcode = 0x60
-	//# WIP
+
 	OPCODE_BCC_RELATIVE Opcode = 0x90
 	OPCODE_BCS_RELATIVE Opcode = 0xB0
 	OPCODE_BEQ_RELATIVE Opcode = 0xF0
@@ -64,15 +64,16 @@ const (
 	OPCODE_BPL_RELATIVE Opcode = 0x10
 	OPCODE_BVC_RELATIVE Opcode = 0x50
 	OPCODE_BVS_RELATIVE Opcode = 0x70
-	//# WIP END
+
 	OPCODE_ADC_IMMEDIATE Opcode = 0x69
 	OPCODE_ADC_ZP        Opcode = 0x65
 	OPCODE_ADC_ABSOLUTE  Opcode = 0x6D
-	OPCODE_SBC_IMMEDIATE Opcode = 0xD9
-	//# WIP
-	OPCODE_BIT_ABSOLUTE Opcode = 0x24
-	OPCODE_BIT_ZP       Opcode = 0x2C
-	//# WIP END
+	OPCODE_SBC_IMMEDIATE Opcode = 0xE9
+	OPCODE_SBC_ZP        Opcode = 0xE5
+	OPCODE_SBC_ABSOLUTE  Opcode = 0xED
+
+	//TODO OPCODE_BIT_ABSOLUTE Opcode = 0x24
+	//TODO OPCODE_BIT_ZP       Opcode = 0x2C
 
 	OPCODE_CLC_IMPLIED Opcode = 0x18
 	OPCODE_CLD_IMPLIED Opcode = 0xD8
@@ -81,15 +82,39 @@ const (
 	OPCODE_SEC_IMPLIED Opcode = 0x38
 	OPCODE_SED_IMPLIED Opcode = 0xF8
 	OPCODE_SEI_IMPLIED Opcode = 0x78
-)
 
-type RegisterDef string
+	OPCODE_AND_IMMEDIATE  Opcode = 0x29
+	OPCODE_AND_ZP         Opcode = 0x25
+	OPCODE_AND_ZP_X       Opcode = 0x35
+	OPCODE_AND_ABSOLUTE   Opcode = 0x2D
+	OPCODE_AND_ABSOLUTE_X Opcode = 0x3D
+	OPCODE_AND_ABSOLUTE_Y Opcode = 0x39
+	//OPCODE_AND_INDIRECT_X Opcode = 0x21
+	//OPCODE_AND_INDIRECT_Y Opcode = 0x31
 
-const (
-	REGISTER_A  RegisterDef = "A"
-	REGISTER_X  RegisterDef = "X"
-	REGISTER_Y  RegisterDef = "Y"
-	REGISTER_SP RegisterDef = "SP"
+	OPCODE_ASL_IMPLIED    Opcode = 0x0A
+	OPCODE_ASL_ZP         Opcode = 0x06
+	OPCODE_ASL_ZP_X       Opcode = 0x16
+	OPCODE_ASL_ABSOLUTE   Opcode = 0x0E
+	OPCODE_ASL_ABSOLUTE_X Opcode = 0x1E
+
+	OPCODE_LSR_IMPLIED    Opcode = 0x4A
+	OPCODE_LSR_ZP         Opcode = 0x46
+	OPCODE_LSR_ZP_X       Opcode = 0x56
+	OPCODE_LSR_ABSOLUTE   Opcode = 0x4E
+	OPCODE_LSR_ABSOLUTE_X Opcode = 0x5E
+
+	OPCODE_ROL_IMPLIED    Opcode = 0x2A
+	OPCODE_ROL_ZP         Opcode = 0x26
+	OPCODE_ROL_ZP_X       Opcode = 0x36
+	OPCODE_ROL_ABSOLUTE   Opcode = 0x2E
+	OPCODE_ROL_ABSOLUTE_X Opcode = 0x3E
+
+	OPCODE_ROR_IMPLIED    Opcode = 0x6A
+	OPCODE_ROR_ZP         Opcode = 0x66
+	OPCODE_ROR_ZP_X       Opcode = 0x76
+	OPCODE_ROR_ABSOLUTE   Opcode = 0x6E
+	OPCODE_ROR_ABSOLUTE_X Opcode = 0x7E
 )
 
 type Cycle interface {
@@ -277,7 +302,7 @@ func (c *CycleAddWithCarryImmediate) Exec(proc *processor6502) Cycle {
 	op1 := uint16(*reg)
 	op2 := uint16(proc.Bus.Read(proc.PC))
 	sum := op1 + op2
-	if proc.Status.Get(PROCESSOR_STATUS_FLAG_C) {
+	if proc.Status.GetFlag(PROCESSOR_STATUS_FLAG_C) {
 		sum += 1
 	}
 	carry := sum>>8 != 0
@@ -301,7 +326,7 @@ func (c *CycleAddWithCarryEffective) Exec(proc *processor6502) Cycle {
 	op1 := uint16(*reg)
 	op2 := uint16(proc.Bus.Read(proc.AB))
 	sum := op1 + op2
-	if proc.Status.Get(PROCESSOR_STATUS_FLAG_C) {
+	if proc.Status.GetFlag(PROCESSOR_STATUS_FLAG_C) {
 		sum += 1
 	}
 	carry := sum>>8 != 0
@@ -321,7 +346,7 @@ func (c *CycleSubWithBorrowImmediate) Exec(proc *processor6502) Cycle {
 	op1 := uint16(*reg)
 	op2 := uint16(proc.Bus.Read(proc.PC))
 	diff := op1 - op2
-	if proc.Status.Get(PROCESSOR_STATUS_FLAG_C) {
+	if !proc.Status.GetFlag(PROCESSOR_STATUS_FLAG_C) {
 		diff -= 1
 	}
 	carry := diff>>8 != 0
@@ -332,6 +357,26 @@ func (c *CycleSubWithBorrowImmediate) Exec(proc *processor6502) Cycle {
 	proc.Status.Update(PROCESSOR_STATUS_FLAG_V, overflow)
 	proc.Status.UpdateNZ(*reg)
 	proc.PC++
+	return nil
+}
+
+type CycleSubWithBorrowEffective struct{}
+
+func (c *CycleSubWithBorrowEffective) Exec(proc *processor6502) Cycle {
+	reg := proc.GetRegister(REGISTER_A)
+	op1 := uint16(*reg)
+	op2 := uint16(proc.Bus.Read(proc.AB))
+	diff := op1 - op2
+	if !proc.Status.GetFlag(PROCESSOR_STATUS_FLAG_C) {
+		diff -= 1
+	}
+	carry := diff>>8 != 0
+	signBit := uint16(0x0080)
+	overflow := (op1&signBit != op2&signBit) && (op2&signBit == diff&signBit)
+	*reg = uint8(diff)
+	proc.Status.Update(PROCESSOR_STATUS_FLAG_C, carry)
+	proc.Status.Update(PROCESSOR_STATUS_FLAG_V, overflow)
+	proc.Status.UpdateNZ(*reg)
 	return nil
 }
 
@@ -444,7 +489,7 @@ type CycleBranchFetchOp struct {
 
 func (c *CycleBranchFetchOp) Exec(proc *processor6502) Cycle {
 	branchAddress := proc.Bus.Read(proc.PC)
-	if c.FlagTest != proc.Status.Get(c.Flag) {
+	if c.FlagTest != proc.Status.GetFlag(c.Flag) {
 		proc.PC++
 		return nil
 	}
@@ -459,7 +504,29 @@ func (c *CycleBranchFetchOp) Exec(proc *processor6502) Cycle {
 	default:
 		return tmpCycleBranchTake
 	}
+}
 
+// logic
+
+type CycleUnaryLogicOpApply struct {
+	op           UnaryLogicOp
+	sourceTarget RegisterDef
+}
+
+func (c *CycleUnaryLogicOpApply) Exec(proc *processor6502) Cycle {
+	c.op.Apply(proc, c.sourceTarget, c.sourceTarget)
+	return nil
+}
+
+type CycleBinaryLogicOpApplyImmediate struct {
+	op BinaryLogicOp
+}
+
+func (c *CycleBinaryLogicOpApplyImmediate) Exec(proc *processor6502) Cycle {
+	*proc.GetRegister(DATA_LATCH) = proc.Bus.Read(proc.PC)
+	c.op.Apply(proc, DATA_LATCH)
+	proc.PC++
+	return nil
 }
 
 // InstructionSet
@@ -489,19 +556,19 @@ var InstructionSet = map[Opcode][]Cycle{
 	OPCODE_DEX_IMPLIED: {&CycleDecImplied{REGISTER_X}},
 	OPCODE_DEY_IMPLIED: {&CycleDecImplied{REGISTER_Y}},
 	// ST*
-	OPCODE_STA_ZP:       {&CycleFetchAddressLow{}, &CycleWriteEffective{REGISTER_A}},
-	OPCODE_STX_ZP:       {&CycleFetchAddressLow{}, &CycleWriteEffective{REGISTER_X}},
-	OPCODE_STY_ZP:       {&CycleFetchAddressLow{}, &CycleWriteEffective{REGISTER_Y}},
-	OPCODE_STA_ZP_X:     {&CycleFetchAddressLow{}, &CycleFetchAddressIndexedZp{REGISTER_X}, &CycleWriteEffective{REGISTER_A}},
-	OPCODE_STX_ZP_Y:     {&CycleFetchAddressLow{}, &CycleFetchAddressIndexedZp{REGISTER_Y}, &CycleWriteEffective{REGISTER_X}},
-	OPCODE_STY_ZP_X:     {&CycleFetchAddressLow{}, &CycleFetchAddressIndexedZp{REGISTER_X}, &CycleWriteEffective{REGISTER_Y}},
-	OPCODE_STA_ABSOLUTE: {&CycleFetchAddressLow{}, &CycleFetchAddressHigh{}, &CycleWriteEffective{REGISTER_A}},
-	OPCODE_STX_ABSOLUTE: {&CycleFetchAddressLow{}, &CycleFetchAddressHigh{}, &CycleWriteEffective{REGISTER_X}},
-	OPCODE_STY_ABSOLUTE: {&CycleFetchAddressLow{}, &CycleFetchAddressHigh{}, &CycleWriteEffective{REGISTER_Y}},
-	//# WIP
+	OPCODE_STA_ZP:         {&CycleFetchAddressLow{}, &CycleWriteEffective{REGISTER_A}},
+	OPCODE_STX_ZP:         {&CycleFetchAddressLow{}, &CycleWriteEffective{REGISTER_X}},
+	OPCODE_STY_ZP:         {&CycleFetchAddressLow{}, &CycleWriteEffective{REGISTER_Y}},
+	OPCODE_STA_ZP_X:       {&CycleFetchAddressLow{}, &CycleFetchAddressIndexedZp{REGISTER_X}, &CycleWriteEffective{REGISTER_A}},
+	OPCODE_STX_ZP_Y:       {&CycleFetchAddressLow{}, &CycleFetchAddressIndexedZp{REGISTER_Y}, &CycleWriteEffective{REGISTER_X}},
+	OPCODE_STY_ZP_X:       {&CycleFetchAddressLow{}, &CycleFetchAddressIndexedZp{REGISTER_X}, &CycleWriteEffective{REGISTER_Y}},
+	OPCODE_STA_ABSOLUTE:   {&CycleFetchAddressLow{}, &CycleFetchAddressHigh{}, &CycleWriteEffective{REGISTER_A}},
+	OPCODE_STX_ABSOLUTE:   {&CycleFetchAddressLow{}, &CycleFetchAddressHigh{}, &CycleWriteEffective{REGISTER_X}},
+	OPCODE_STY_ABSOLUTE:   {&CycleFetchAddressLow{}, &CycleFetchAddressHigh{}, &CycleWriteEffective{REGISTER_Y}},
 	OPCODE_STA_ABSOLUTE_X: {&CycleFetchAddressLow{}, &CycleFetchAddressIndexed{REGISTER_X}, &CycleCalcEffectiveAddrIndexed{}, &CycleWriteEffective{REGISTER_A}},
 	OPCODE_STA_ABSOLUTE_Y: {&CycleFetchAddressLow{}, &CycleFetchAddressIndexed{REGISTER_Y}, &CycleCalcEffectiveAddrIndexed{}, &CycleWriteEffective{REGISTER_A}},
-	//# WIP END
+
+	// Branch
 	OPCODE_BCC_RELATIVE: {&CycleBranchFetchOp{PROCESSOR_STATUS_FLAG_C, false}}, // 2-4 cycles!
 	OPCODE_BCS_RELATIVE: {&CycleBranchFetchOp{PROCESSOR_STATUS_FLAG_C, true}},  // 2-4 cycles!
 	OPCODE_BNE_RELATIVE: {&CycleBranchFetchOp{PROCESSOR_STATUS_FLAG_Z, false}}, // 2-4 cycles!
@@ -510,6 +577,7 @@ var InstructionSet = map[Opcode][]Cycle{
 	OPCODE_BMI_RELATIVE: {&CycleBranchFetchOp{PROCESSOR_STATUS_FLAG_N, true}},  // 2-4 cycles!
 	OPCODE_BVC_RELATIVE: {&CycleBranchFetchOp{PROCESSOR_STATUS_FLAG_V, false}}, // 2-4 cycles!
 	OPCODE_BVS_RELATIVE: {&CycleBranchFetchOp{PROCESSOR_STATUS_FLAG_V, true}},  // 2-4 cycles!
+
 	// TX
 	OPCODE_TAX_IMPLIED: {&CycleCopyRegister{Source: REGISTER_A, Target: REGISTER_X}},
 	OPCODE_TXA_IMPLIED: {&CycleCopyRegister{Source: REGISTER_X, Target: REGISTER_A}},
@@ -517,15 +585,45 @@ var InstructionSet = map[Opcode][]Cycle{
 	OPCODE_TXS_IMPLIED: {&CycleCopyRegister{Source: REGISTER_X, Target: REGISTER_SP}},
 	OPCODE_TAY_IMPLIED: {&CycleCopyRegister{Source: REGISTER_A, Target: REGISTER_Y}},
 	OPCODE_TYA_IMPLIED: {&CycleCopyRegister{Source: REGISTER_Y, Target: REGISTER_A}},
+
 	// JMP
 	OPCODE_JMP_ABSOLUTE: {&CycleFetchAddressLow{}, &CycleCopyPclFetchPch{}},
 	OPCODE_JSR_ABSOLUTE: {&CycleFetchAddressLow{}, &CycleWait{}, &CycleJsrPchPush{}, &CycleJsrPclPush{}, &CycleCopyPclFetchPch{}},
 	OPCODE_RTS_IMPLIED:  {&CycleTrash{}, &CycleRtIncSp{}, &CycleRtPullPcl{}, &CycleRtPullPch{}, &CycleRtIncPc{}},
+
 	// ARITH
+	// TODO refactor
 	OPCODE_ADC_IMMEDIATE: {&CycleAddWithCarryImmediate{}},
 	OPCODE_ADC_ZP:        {&CycleFetchAddressLow{}, &CycleAddWithCarryEffective{}},
 	OPCODE_ADC_ABSOLUTE:  {&CycleFetchAddressLow{}, &CycleFetchAddressHigh{}, &CycleAddWithCarryEffective{}},
 	OPCODE_SBC_IMMEDIATE: {&CycleSubWithBorrowImmediate{}},
+	OPCODE_SBC_ZP:        {&CycleFetchAddressLow{}, &CycleSubWithBorrowEffective{}},
+	OPCODE_SBC_ABSOLUTE:  {&CycleFetchAddressLow{}, &CycleFetchAddressHigh{}, &CycleSubWithBorrowEffective{}},
+
+	// UNARY LOGIC
+	OPCODE_ASL_IMPLIED:    {&CycleUnaryLogicOpApply{LogicOps.LogicOpAsl, REGISTER_A}},
+	OPCODE_LSR_IMPLIED:    {&CycleUnaryLogicOpApply{LogicOps.LogicOpLsr, REGISTER_A}},
+	OPCODE_ROL_IMPLIED:    {&CycleUnaryLogicOpApply{LogicOps.LogicOpRol, REGISTER_A}},
+	OPCODE_ROR_IMPLIED:    {&CycleUnaryLogicOpApply{LogicOps.LogicOpRor, REGISTER_A}},
+	OPCODE_ASL_ZP:         {&CycleFetchAddressLow{}, &CycleFetchEffective{DATA_LATCH}, &CycleUnaryLogicOpApply{LogicOps.LogicOpAsl, DATA_LATCH}, &CycleWriteEffective{DATA_LATCH}},
+	OPCODE_LSR_ZP:         {&CycleFetchAddressLow{}, &CycleFetchEffective{DATA_LATCH}, &CycleUnaryLogicOpApply{LogicOps.LogicOpLsr, DATA_LATCH}, &CycleWriteEffective{DATA_LATCH}},
+	OPCODE_ROL_ZP:         {&CycleFetchAddressLow{}, &CycleFetchEffective{DATA_LATCH}, &CycleUnaryLogicOpApply{LogicOps.LogicOpRol, DATA_LATCH}, &CycleWriteEffective{DATA_LATCH}},
+	OPCODE_ROR_ZP:         {&CycleFetchAddressLow{}, &CycleFetchEffective{DATA_LATCH}, &CycleUnaryLogicOpApply{LogicOps.LogicOpRor, DATA_LATCH}, &CycleWriteEffective{DATA_LATCH}},
+	OPCODE_ASL_ZP_X:       {&CycleFetchAddressLow{}, &CycleFetchAddressIndexedZp{REGISTER_X}, &CycleFetchEffective{DATA_LATCH}, &CycleUnaryLogicOpApply{LogicOps.LogicOpAsl, DATA_LATCH}, &CycleWriteEffective{DATA_LATCH}},
+	OPCODE_LSR_ZP_X:       {&CycleFetchAddressLow{}, &CycleFetchAddressIndexedZp{REGISTER_X}, &CycleFetchEffective{DATA_LATCH}, &CycleUnaryLogicOpApply{LogicOps.LogicOpLsr, DATA_LATCH}, &CycleWriteEffective{DATA_LATCH}},
+	OPCODE_ROL_ZP_X:       {&CycleFetchAddressLow{}, &CycleFetchAddressIndexedZp{REGISTER_X}, &CycleFetchEffective{DATA_LATCH}, &CycleUnaryLogicOpApply{LogicOps.LogicOpRol, DATA_LATCH}, &CycleWriteEffective{DATA_LATCH}},
+	OPCODE_ROR_ZP_X:       {&CycleFetchAddressLow{}, &CycleFetchAddressIndexedZp{REGISTER_X}, &CycleFetchEffective{DATA_LATCH}, &CycleUnaryLogicOpApply{LogicOps.LogicOpRor, DATA_LATCH}, &CycleWriteEffective{DATA_LATCH}},
+	OPCODE_ASL_ABSOLUTE:   {&CycleFetchAddressLow{}, &CycleFetchAddressHigh{}, &CycleFetchEffective{DATA_LATCH}, &CycleUnaryLogicOpApply{LogicOps.LogicOpAsl, DATA_LATCH}, &CycleWriteEffective{DATA_LATCH}},
+	OPCODE_LSR_ABSOLUTE:   {&CycleFetchAddressLow{}, &CycleFetchAddressHigh{}, &CycleFetchEffective{DATA_LATCH}, &CycleUnaryLogicOpApply{LogicOps.LogicOpLsr, DATA_LATCH}, &CycleWriteEffective{DATA_LATCH}},
+	OPCODE_ROL_ABSOLUTE:   {&CycleFetchAddressLow{}, &CycleFetchAddressHigh{}, &CycleFetchEffective{DATA_LATCH}, &CycleUnaryLogicOpApply{LogicOps.LogicOpRol, DATA_LATCH}, &CycleWriteEffective{DATA_LATCH}},
+	OPCODE_ROR_ABSOLUTE:   {&CycleFetchAddressLow{}, &CycleFetchAddressHigh{}, &CycleFetchEffective{DATA_LATCH}, &CycleUnaryLogicOpApply{LogicOps.LogicOpRor, DATA_LATCH}, &CycleWriteEffective{DATA_LATCH}},
+	OPCODE_ASL_ABSOLUTE_X: {&CycleFetchAddressLow{}, &CycleFetchAddressHigh{}, &CycleFetchAddressIndexed{REGISTER_X}, &CycleFetchEffective{DATA_LATCH}, &CycleUnaryLogicOpApply{LogicOps.LogicOpAsl, DATA_LATCH}, &CycleWriteEffective{DATA_LATCH}},
+	OPCODE_LSR_ABSOLUTE_X: {&CycleFetchAddressLow{}, &CycleFetchAddressHigh{}, &CycleFetchAddressIndexed{REGISTER_X}, &CycleFetchEffective{DATA_LATCH}, &CycleUnaryLogicOpApply{LogicOps.LogicOpLsr, DATA_LATCH}, &CycleWriteEffective{DATA_LATCH}},
+	OPCODE_ROL_ABSOLUTE_X: {&CycleFetchAddressLow{}, &CycleFetchAddressHigh{}, &CycleFetchAddressIndexed{REGISTER_X}, &CycleFetchEffective{DATA_LATCH}, &CycleUnaryLogicOpApply{LogicOps.LogicOpRol, DATA_LATCH}, &CycleWriteEffective{DATA_LATCH}},
+	OPCODE_ROR_ABSOLUTE_X: {&CycleFetchAddressLow{}, &CycleFetchAddressHigh{}, &CycleFetchAddressIndexed{REGISTER_X}, &CycleFetchEffective{DATA_LATCH}, &CycleUnaryLogicOpApply{LogicOps.LogicOpRor, DATA_LATCH}, &CycleWriteEffective{DATA_LATCH}},
+
+	// BINARY LOGIC
+	OPCODE_AND_IMMEDIATE: {&CycleBinaryLogicOpApplyImmediate{LogicOps.LogicOpAnd}},
 	// STATUS
 	OPCODE_CLC_IMPLIED: {&CycleProcFlagClear{PROCESSOR_STATUS_FLAG_C}},
 	OPCODE_CLD_IMPLIED: {&CycleProcFlagClear{PROCESSOR_STATUS_FLAG_D}},

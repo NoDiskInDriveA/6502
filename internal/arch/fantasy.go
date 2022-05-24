@@ -28,7 +28,7 @@ func (fa *fantasyArchitecture) Run() {
 func NewDebugFantasyArchitecture() Architecture {
 	bus := device.NewSystemBus()
 	memory := device.NewRamDevice()
-	helper.LoadIntoMemory(memory, PRG_LOCATION, "/Users/patrick.durold/Projects/GoLang/6502/asm/sum.bin")
+	helper.LoadIntoMemory(memory, PRG_LOCATION, "/Users/patrick.durold/Projects/GoLang/6502/asm/fizzbuzz.bin")
 	helper.LoadIntoMemory(memory, ROM_LOCATION, "/Users/patrick.durold/Projects/GoLang/6502/asm/rom.bin")
 	bus.AttachMappedDevice(0x0000, 0xFFFF, 0xFFFF, memory)
 	p := mos_6502.NewProcessor(bus)
@@ -45,7 +45,7 @@ func NewDebugFantasyArchitecture() Architecture {
 func NewFantasyArchitecture() Architecture {
 	bus := device.NewSystemBus()
 	memory := device.NewRamDevice()
-	helper.LoadIntoMemory(memory, PRG_LOCATION, "/Users/patrick.durold/Projects/GoLang/6502/asm/sum.bin")
+	helper.LoadIntoMemory(memory, PRG_LOCATION, "/Users/patrick.durold/Projects/GoLang/6502/asm/loop.bin")
 	helper.LoadIntoMemory(memory, ROM_LOCATION, "/Users/patrick.durold/Projects/GoLang/6502/asm/rom.bin")
 	bus.AttachMappedDevice(0x0000, 0xFFFF, 0xFFFF, memory)
 	p := mos_6502.NewProcessor(bus)

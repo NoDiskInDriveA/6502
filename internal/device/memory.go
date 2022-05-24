@@ -28,5 +28,5 @@ func (r *ram) Slice(startAddress uint16, endAddress uint16) []uint8 {
 }
 
 func (r *ram) LoadAt(startAddress uint16, bytes []uint8) {
-	copy((r.memory)[startAddress:], bytes)
+	copy(r.memory[startAddress:], bytes)
 }
