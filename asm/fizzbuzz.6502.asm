@@ -1,16 +1,25 @@
 .include "macros.6502.asm"
 
-// check whether value in ADDR is divisible by 3, after macro ADDR contains 1 if divisible, 0 otherwise
-.macro DIVISIBLE_BY_THREE(ADDR)
+.code
+.org 0x0800
+    _START
+        LDA INPUT1
+        DIVISIBLE_BY_THREE()
+        STA INPUT1
+        LDA INPUT2
+        DIVISIBLE_BY_THREE()
+        STA INPUT2
+    _END
+        HALT()
+
+// check whether value in A is divisible by 3, after routine A contains 1 if divisible, 0 otherwise
+.function DIVISIBLE_BY_THREE()
+    @INPUT .equ $00
     @ODD_BITS .equ $08
     @EVEN_BITS .equ $09
     // X -> LOOP VAR, Y -> COUNT VAR
-        LDA #$00
-        STA @ODD_BITS
-        STA @EVEN_BITS
-
+        STA @INPUT
     @CALC_ODD
-        LDA ADDR
         LDX #$4 
         LDY #$0 
         AND #%01010101
@@ -26,7 +35,7 @@
         STY @ODD_BITS
 
     @CALC_EVEN
-        LDA ADDR
+        LDA @INPUT
         LDX #$4 
         LDY #$0 
         AND #%10101010
@@ -45,34 +54,22 @@
         LDA @ODD_BITS
         SEC
         SBC @EVEN_BITS
-        STA ADDR+1 //DEBUG
         BEQ @IS_DIVISIBLE
         SEC
         SBC #$03
-        STA ADDR+2 //DEBUG
         BEQ @IS_DIVISIBLE
         LDA #$00
-        BEQ @WRITE_RESULT
+        BEQ @END_ROUTINE
 
     @IS_DIVISIBLE
         LDA #$01
 
-    @WRITE_RESULT
-        STA ADDR
-
-.endmacro
-
-.code
-.org 0x0800
-    _START
-        DIVISIBLE_BY_THREE(INPUT1)
-        DIVISIBLE_BY_THREE(INPUT2)
-    _END
-        HALT()
+    @END_ROUTINE
+.endfunction
 
 .segment "DATA"
 .org 0x2000
     INPUT1
-    .byte $64,$00,$00
+    .byte $64
     INPUT2
-    .byte $63,$00,$00
+    .byte $63
