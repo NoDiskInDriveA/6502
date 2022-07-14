@@ -59,12 +59,32 @@ func (l *logicAnd) Apply(proc *processor6502, register RegisterDef) {
 	proc.Status.UpdateNZ(uint8(*regA))
 }
 
+type logicOr struct{}
+
+func (l *logicOr) Apply(proc *processor6502, register RegisterDef) {
+	regA := proc.GetRegister(REGISTER_A)
+	op := proc.GetRegister(register)
+	*regA = *regA | *op
+	proc.Status.UpdateNZ(uint8(*regA))
+}
+
+type logicXor struct{}
+
+func (l *logicXor) Apply(proc *processor6502, register RegisterDef) {
+	regA := proc.GetRegister(REGISTER_A)
+	op := proc.GetRegister(register)
+	*regA = *regA ^ *op
+	proc.Status.UpdateNZ(uint8(*regA))
+}
+
 type logicOps struct {
 	LogicOpAsl UnaryLogicOp
 	LogicOpLsr UnaryLogicOp
 	LogicOpRol UnaryLogicOp
 	LogicOpRor UnaryLogicOp
 	LogicOpAnd BinaryLogicOp
+	LogicOpOr  BinaryLogicOp
+	LogicOpXor BinaryLogicOp
 }
 
 var LogicOps = logicOps{
@@ -73,4 +93,6 @@ var LogicOps = logicOps{
 	LogicOpRol: &logicRol{},
 	LogicOpRor: &logicRor{},
 	LogicOpAnd: &logicAnd{},
+	LogicOpOr:  &logicOr{},
+	LogicOpXor: &logicXor{},
 }

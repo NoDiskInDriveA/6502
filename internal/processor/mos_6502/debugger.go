@@ -28,12 +28,13 @@ func (d debugger) Tick() bool {
 	// d.dumpMemoryLine(0x1EF0)
 	// d.dumpMemoryLine(0x1FF0)
 	d.dumpMemoryLine(0x2000)
+	d.dumpMemoryLine(0x2080)
 	return true
 }
 
 func (d debugger) dumpStatus() {
 	p, _ := d.processor.(*processor6502)
-	fmt.Printf(">>> A: 0x%02X X: 0x%02X Y: 0x%02X SR: %s\tCycles: %08d\tPC: 0x%04X\tSP: 0x%02X\tIR: 0x%02X\tAB: 0x%04X\n", p.A, p.X, p.Y, p.Status, p.lifetimeCycles, p.PC, p.SP, p.IR, p.AB)
+	fmt.Printf(">>> A: 0x%02X X: 0x%02X Y: 0x%02X D: 0x%02X SR: %s\tCycles: %08d\tPC: 0x%04X\tSP: 0x%02X\tIR: 0x%02X\tAB: 0x%04X\n", p.A, p.X, p.Y, p.DataLatch, p.Status, p.lifetimeCycles, p.PC, p.SP, p.IR, p.AB)
 }
 
 func (d debugger) dumpMemoryLine(startAddress uint16) {

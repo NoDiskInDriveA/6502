@@ -29,7 +29,7 @@ func createTestSystem(binPath string) (device.SystemClock, device.ReadWriteDevic
 
 func TestLdAbsoluteIndexed(t *testing.T) {
 	clock, ram := createTestSystem("../asm/tests/ld_absolute_indexed.bin")
-	<-clock.StartClock(time.Microsecond)
+	<-clock.RunClock(time.Microsecond)
 	assert.EqualValues(t, uint8(0x01), ram.Read(0x00))
 	assert.EqualValues(t, uint8(0x02), ram.Read(0x01))
 	assert.EqualValues(t, uint8(0x03), ram.Read(0x02))
@@ -46,7 +46,7 @@ func TestLdAbsoluteIndexed(t *testing.T) {
 
 func TestStAbsoluteIndexed(t *testing.T) {
 	clock, ram := createTestSystem("../asm/tests/st_absolute_indexed.bin")
-	<-clock.StartClock(time.Microsecond)
+	<-clock.RunClock(time.Microsecond)
 	assert.EqualValues(t, uint8(0x01), ram.Read(0x1EFE))
 	assert.EqualValues(t, uint8(0x02), ram.Read(0x1EFF))
 	assert.EqualValues(t, uint8(0x03), ram.Read(0x1F00))
@@ -57,7 +57,7 @@ func TestStAbsoluteIndexed(t *testing.T) {
 
 func TestUnaryLogic(t *testing.T) {
 	clock, ram := createTestSystem("../asm/tests/unary_logic_test.bin")
-	<-clock.StartClock(time.Microsecond)
+	<-clock.RunClock(time.Microsecond)
 	assert.EqualValues(t, uint8(0x7F), ram.Read(0x4000))
 	assert.EqualValues(t, uint8(0x01), ram.Read(0x4001))
 	assert.EqualValues(t, uint8(0xFF), ram.Read(0x4002))

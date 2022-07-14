@@ -1,8 +1,6 @@
 package mos_6502
 
 import (
-	"fmt"
-
 	"github.com/NoDiskInDriveA/6502/internal/device"
 	"github.com/NoDiskInDriveA/6502/internal/processor"
 )
@@ -64,7 +62,7 @@ func (p *processor6502) Reset() {
 	p.pageChangedInfo = false
 	p.SP = 0xFD
 	p.PC = uint16(p.Bus.Read(RESET_VECTOR_LSB)) + uint16(p.Bus.Read(RESET_VECTOR_MSB))<<8
-	p.lifetimeCycles = 0
+	p.lifetimeCycles = 7
 	p.currentInstructionCycleIndex = 0
 	p.nextInstructionCycle = nil
 }
@@ -75,7 +73,6 @@ func (p *processor6502) Tick() bool {
 		p.IR = Opcode(p.Bus.Read(p.PC))
 		if p.IR == OPCODE_HALT {
 			if p.enableHaltOpcode {
-				fmt.Print("Encountered HALT instruction, exiting")
 				p.state = STATE_HALT
 				return true
 			} else {

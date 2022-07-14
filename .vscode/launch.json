@@ -5,6 +5,7 @@
 
     "version": "0.2.0",
     "configurations": [
+
       {
         "name": "Launch CPU",
         "type": "go",
@@ -13,11 +14,11 @@
         "program": "${workspaceFolder}/cmd/cpu/main.go"
       },
       {
-        "name": "Launch Stuff",
+        "name": "Launch gocui",
         "type": "go",
         "request": "launch",
         "mode": "debug",
-        "program": "${workspaceFolder}/cmd/test/main.go"
+        "program": "${workspaceFolder}/cmd/gocui/main.go"
       }
     ]
   }

@@ -14,4 +14,5 @@ func main() {
 
 	elapsed := time.Since(start)
 	fmt.Printf("Binomial took %s", elapsed)
+
 }

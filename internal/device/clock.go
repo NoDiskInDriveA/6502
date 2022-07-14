@@ -12,7 +12,8 @@ type ClockAwareDevice interface {
 type SystemClock interface {
 	AttachDevice(device ClockAwareDevice, divider int)
 	AttachDebugger(device ClockAwareDevice)
-	StartClock(tickDuration time.Duration) chan bool
+	RunClock(tickDuration time.Duration) chan bool
+	TickClock()
 }
 
 type clockAwareDeviceDefinition struct {
@@ -21,8 +22,10 @@ type clockAwareDeviceDefinition struct {
 }
 
 type synchronizedSystemClock struct {
-	devices  []clockAwareDeviceDefinition
-	debugger ClockAwareDevice
+	devices     []clockAwareDeviceDefinition
+	debugger    ClockAwareDevice
+	deviceCount int
+	running     bool
 }
 
 func (tc *synchronizedSystemClock) AttachDevice(device ClockAwareDevice, divider int) {
@@ -30,6 +33,7 @@ func (tc *synchronizedSystemClock) AttachDevice(device ClockAwareDevice, divider
 		panic("Clock dividers other than 1 are currently not implemented.")
 	}
 	tc.devices = append(tc.devices, clockAwareDeviceDefinition{device, divider})
+	tc.deviceCount = len(tc.devices)
 }
 
 // debugger which will run _after_ each cycle
@@ -37,22 +41,20 @@ func (tc *synchronizedSystemClock) AttachDebugger(device ClockAwareDevice) {
 	tc.debugger = device
 }
 
-func (tc *synchronizedSystemClock) StartClock(tickDuration time.Duration) chan bool {
+func (tc *synchronizedSystemClock) RunClock(tickDuration time.Duration) chan bool {
 	ticker := time.NewTicker(tickDuration)
 	stop := make(chan bool)
-	running := true
-	deviceCount := len(tc.devices)
 	var waitgroup sync.WaitGroup
 	go func() {
-		for running {
+		for tc.running {
 			<-ticker.C
 			if tc.debugger != nil {
-				running = running && tc.debugger.Tick()
+				tc.running = tc.running && tc.debugger.Tick()
 			}
-			waitgroup.Add(deviceCount)
+			waitgroup.Add(tc.deviceCount)
 			for _, d := range tc.devices {
 				go func(device ClockAwareDevice) {
-					running = running && device.Tick()
+					tc.running = tc.running && device.Tick()
 					waitgroup.Done()
 				}(d.device)
 			}
@@ -65,6 +67,18 @@ func (tc *synchronizedSystemClock) StartClock(tickDuration time.Duration) chan b
 	return stop
 }
 
+func (tc *synchronizedSystemClock) TickClock() {
+	var waitgroup sync.WaitGroup
+	waitgroup.Add(tc.deviceCount)
+	for _, d := range tc.devices {
+		go func(device ClockAwareDevice) {
+			tc.running = tc.running && device.Tick()
+			waitgroup.Done()
+		}(d.device)
+	}
+	waitgroup.Wait()
+}
+
 func NewSynchronizedClock() SystemClock {
-	return &synchronizedSystemClock{}
+	return &synchronizedSystemClock{running: true}
 }
