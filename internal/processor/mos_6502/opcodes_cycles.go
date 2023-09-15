@@ -22,9 +22,9 @@ func (c *CycleWait) Exec(proc *processor6502) Cycle {
 
 // CycleTrash
 
-type CycleTrash struct{}
+type CycleDummyRead struct{}
 
-func (c *CycleTrash) Exec(proc *processor6502) Cycle {
+func (c *CycleDummyRead) Exec(proc *processor6502) Cycle {
 	proc.Bus.Read(proc.PC)
 	return nil
 }
@@ -347,6 +347,19 @@ type CycleCopyPclFetchPch struct {
 
 func (c *CycleCopyPclFetchPch) Exec(proc *processor6502) Cycle {
 	proc.PC = (proc.AB & 0xFF) | uint16(proc.Bus.Read(proc.PC))<<8
+	return nil
+}
+
+// CycleCopyPclFetchPchIndirect
+
+type CycleCopyPclFetchPchIndirect struct {
+}
+
+func (c *CycleCopyPclFetchPchIndirect) Exec(proc *processor6502) Cycle {
+	// PCH always from same page as PCL, no page fix
+	pchAddress := (proc.AB & 0xFF00) | ((proc.AB + 1) & 0xFF)
+	//TODO continue, not correct
+	proc.PC = uint16(proc.Bus.Read(pchAddress))<<8 | uint16(*proc.GetRegister(DATA_LATCH))
 	return nil
 }
 

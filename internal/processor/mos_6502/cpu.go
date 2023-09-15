@@ -90,6 +90,9 @@ func (p *processor6502) Tick() bool {
 		if p.currentInstructionCycleIndex == len(p.currentInstructionCycles) {
 			// interrupts are latched on the last logical ("hardcoded") cycle,
 			// which is also the only one that can return additional cycles
+			// TODO:
+			// - need to check whether this info is correct - might be "penultimate" cycle
+			// - also check whether status (like in SEI/CLI) is latched before or after instruction
 			p.latchInterrupts()
 		}
 		p.currentInstructionCycleIndex++

@@ -77,6 +77,20 @@ func (l *logicXor) Apply(proc *processor6502, register RegisterDef) {
 	proc.Status.UpdateNZ(uint8(*regA))
 }
 
+type logicInc struct{}
+
+func (l *logicInc) Apply(proc *processor6502, register RegisterDef) {
+	*proc.GetRegister(DATA_LATCH) = *proc.GetRegister(DATA_LATCH) + 1
+	proc.Status.UpdateNZ(*proc.GetRegister(DATA_LATCH))
+}
+
+type logicDec struct{}
+
+func (l *logicDec) Apply(proc *processor6502, register RegisterDef) {
+	*proc.GetRegister(DATA_LATCH) = *proc.GetRegister(DATA_LATCH) - 1
+	proc.Status.UpdateNZ(*proc.GetRegister(DATA_LATCH))
+}
+
 type logicOps struct {
 	LogicOpAsl UnaryLogicOp
 	LogicOpLsr UnaryLogicOp
@@ -85,6 +99,8 @@ type logicOps struct {
 	LogicOpAnd BinaryLogicOp
 	LogicOpOr  BinaryLogicOp
 	LogicOpXor BinaryLogicOp
+	LogicOpInc BinaryLogicOp
+	LogicOpDec BinaryLogicOp
 }
 
 var LogicOps = logicOps{
@@ -95,4 +111,6 @@ var LogicOps = logicOps{
 	LogicOpAnd: &logicAnd{},
 	LogicOpOr:  &logicOr{},
 	LogicOpXor: &logicXor{},
+	LogicOpInc: &logicInc{},
+	LogicOpDec: &logicDec{},
 }
